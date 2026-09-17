@@ -42,7 +42,11 @@ model Program {
   chapters Chapter[]
 }
 
-// One chapter inside a Program. Has body text + any number of images.
+// One chapter inside a Program (maps to one "category" in the seed data).
+// `subjects` holds the structured, studyable topic list:
+//   [{ name: string, content: string, keyPoints: string[] }, ...]
+// `content` is kept as a legacy/fallback HTML field for chapters that
+// don't have structured subjects (or for a custom intro blurb per chapter).
 model Chapter {
   id        String   @id @default(cuid())
   programId String
@@ -50,6 +54,7 @@ model Chapter {
   slug      String
   title     String
   content   String   @default("")
+  subjects  Json     @default("[]")
   images    String[] @default([])
   order     Int      @default(0)
   createdAt DateTime @default(now())

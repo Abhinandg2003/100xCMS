@@ -16,8 +16,14 @@ function slugify(value) {
     .replace(/-+/g, '-')
 }
 
+// Legacy-HTML fallback, kept only for chapters that somehow have no
+// structured subjects at all. Handles both the old string[] shape and
+// the new { name, content, keyPoints }[] shape so it never prints
+// "[object Object]" again.
 function subjectsToHtml(subjects) {
-  const items = subjects.map((s) => `  <li>${s}</li>`).join('\n')
+  const items = subjects
+    .map((s) => `  <li>${typeof s === 'string' ? s : s.name}</li>`)
+    .join('\n')
   return `<ul>\n${items}\n</ul>`
 }
 
@@ -71,6 +77,7 @@ async function main() {
     for (let i = 0; i < categories.length; i += 1) {
       const cat = categories[i]
       const chapterSlug = slugify(cat.category)
+      const subjects = cat.subjects || []
 
       const chapter = await prisma.chapter.upsert({
         where: {
@@ -78,20 +85,22 @@ async function main() {
         },
         update: {
           title: cat.category,
-          content: subjectsToHtml(cat.subjects || []),
+          subjects,
+          content: subjectsToHtml(subjects),
           order: i,
         },
         create: {
           programId: program.id,
           slug: chapterSlug,
           title: cat.category,
-          content: subjectsToHtml(cat.subjects || []),
+          subjects,
+          content: subjectsToHtml(subjects),
           images: [],
           order: i,
         },
       })
 
-      console.log(`  Chapter: ${chapter.title}`)
+      console.log(`  Chapter: ${chapter.title} (${subjects.length} subjects)`)
     }
   }
 }
