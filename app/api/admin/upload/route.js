@@ -1,15 +1,36 @@
 import { NextResponse } from 'next/server'
-import { getSupabaseAdmin, BLOG_IMAGE_BUCKET } from '@/lib/supabase'
+import {
+  getSupabaseAdmin,
+  BLOG_IMAGE_BUCKET,
+  PROGRAM_IMAGE_BUCKET,
+} from '@/lib/supabase'
 
 // Protected by middleware.js (matches /api/admin/:path*).
+
+// Callers pick a bucket by name ('blog' | 'program') via the "bucket"
+// field. Defaults to 'blog' so existing callers (PostForm) keep working
+// unchanged.
+const BUCKETS = {
+  blog: BLOG_IMAGE_BUCKET,
+  program: PROGRAM_IMAGE_BUCKET,
+}
 
 export async function POST(request) {
   const formData = await request.formData()
   const file = formData.get('file')
+  const bucketKey = formData.get('bucket') || 'blog'
+  const bucket = BUCKETS[bucketKey]
 
   if (!file) {
     return NextResponse.json(
       { success: false, message: 'No file provided.' },
+      { status: 400 }
+    )
+  }
+
+  if (!bucket) {
+    return NextResponse.json(
+      { success: false, message: `Unknown bucket "${bucketKey}".` },
       { status: 400 }
     )
   }
@@ -23,7 +44,7 @@ export async function POST(request) {
     const supabase = getSupabaseAdmin()
 
     const { error } = await supabase.storage
-      .from(BLOG_IMAGE_BUCKET)
+      .from(bucket)
       .upload(fileName, buffer, {
         contentType: file.type || 'image/jpeg',
         upsert: false,
@@ -36,9 +57,7 @@ export async function POST(request) {
       )
     }
 
-    const { data } = supabase.storage
-      .from(BLOG_IMAGE_BUCKET)
-      .getPublicUrl(fileName)
+    const { data } = supabase.storage.from(bucket).getPublicUrl(fileName)
 
     return NextResponse.json({ success: true, url: data.publicUrl })
   } catch (error) {

@@ -14,6 +14,12 @@ export default async function AdminDashboard() {
         <h1 className="text-2xl font-semibold">Blog posts</h1>
         <div className="flex items-center gap-3">
           <Link
+            href="/admin/programs"
+            className="text-sm px-4 py-2 rounded-full border border-black/10 hover:border-black/30 transition-colors"
+          >
+            Programs
+          </Link>
+          <Link
             href="/admin/new"
             className="text-sm px-4 py-2 rounded-full bg-aura text-black font-medium"
           >

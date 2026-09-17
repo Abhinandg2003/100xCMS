@@ -22,3 +22,39 @@ model Post {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// A course, e.g. "Web Development". Holds an ordered list of Chapters.
+model Program {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String   @default("")
+  coverImage  String?
+  duration    String?
+  level       String?
+  published   Boolean  @default(true)
+  // Free-form UI/display data that doesn't deserve its own columns:
+  // icon name, accent colors, tag label, glow color, etc.
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  chapters Chapter[]
+}
+
+// One chapter inside a Program. Has body text + any number of images.
+model Chapter {
+  id        String   @id @default(cuid())
+  programId String
+  program   Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  slug      String
+  title     String
+  content   String   @default("")
+  images    String[] @default([])
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([programId, slug])
+  @@index([programId])
+}
